@@ -1,0 +1,407 @@
+<!--
+点 动画， time实现的
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="CZML Model">
+    <meta name="cesium-sandcastle-labels" content="CZML">
+    <title>仓库调度系统</title>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+
+<div id="toolbar"></div>
+
+<script id="cesium_sandcastle_script">
+
+    function startup(Cesium) {
+        'use strict';
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+//            infoBox : false,
+//            selectionIndicator: false,
+            shadows : false
+        });
+
+
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(110.46, 22.87, 1000000.0)
+        });
+
+        // 数据准备
+        // 仓库
+        var duAnBase = {
+            name:"都安基地",
+            type:"base",
+            description:"",
+            maxStock:10,
+            nowStock:1.3,
+            day:11,
+            lat:23.9109540362,
+            lon:108.0917367180
+        };
+        var liuZhouBase = {
+            name:"柳州基地",
+            type:"base",
+            description:"",
+            maxStock:10,
+            nowStock:1.3,
+            day:11,
+            lat:24.3234850050,
+            lon:109.4140421916
+        };
+        var guiGangPort = {
+            name:"贵港港口",
+            type:"port",
+            description:"",
+            maxStock:10,
+            nowStock:1.3,
+            day:11,
+            lat:23.1226900139,
+            lon:109.4320720543
+        };
+        var fangChengPort = {
+            name:"防城港口",
+            type:"port",
+            description:"",
+            maxStock:10,
+            nowStock:1.3,
+            day:11,
+            lat:21.6727483360,
+            lon:108.3801277010
+        };
+        var zhuSanJiaoPort = {
+            name:"珠三角港口",
+            type:"port",
+            description:"",
+            maxStock:10,
+            nowStock:1.3,
+            day:11,
+            lat:22.4107986296,
+            lon:113.6370539550
+        };
+
+        var port = [duAnBase, liuZhouBase, guiGangPort, fangChengPort, zhuSanJiaoPort]
+
+        // 道路
+        var railRoute = {
+            name:"铁路",
+            type:"rail",
+            start:liuZhouBase,
+            end:fangChengPort,
+            path:[
+                {lat:24.3234850050,lon:109.4140421916},
+                {lat:24.2194104032,lon:109.3578992540},
+                {lat:24.1674235969,lon:109.3118872688},
+                {lat:24.1104018306,lon:109.2693169755},
+                {lat:23.9109439190,lon:109.2830573201},
+                {lat:23.7526730058,lon:109.2514774458},
+                {lat:23.2287390205,lon:109.1272011095},
+                {lat:22.7584505642,lon:108.9623882555},
+                {lat:22.4833750628,lon:108.9527784429},
+                {lat:22.2255631253,lon:108.8292016539},
+                {lat:22.0512764782,lon:108.6575223798},
+                {lat:21.8602413620,lon:108.4735246727},
+                {lat:21.6727483360,lon:108.3801277010}
+            ]
+        };
+
+        var riverRoute = {
+            name:"水路",
+            type:"river",
+            start:guiGangPort,
+            end:zhuSanJiaoPort,
+            path:[
+                {lat:23.1226900139,lon:109.4320720543},
+                {lat:23.0772224452,lon:109.8220911793},
+                {lat:23.5753245297,lon:110.2121009171},
+                {lat:23.4204216447,lon:110.5458105632},
+                {lat:23.4556755119,lon:111.2928572388},
+                {lat:23.1290088256,lon:111.8655453903},
+                {lat:23.0367943715,lon:112.5082510062},
+                {lat:23.2388353964,lon:113.1619304715},
+                {lat:22.7584189601,lon:113.6261083802},
+                {lat:22.4361271134,lon:113.6782571053},
+                {lat:22.4107986296,lon:113.6370539550}
+            ]
+        };
+        var duAnToFangChengRoute = {
+            name:"都安-南宁-防城",
+            type:"cart",
+            start:duAnBase,
+            end:fangChengPort,
+            path:[
+                {lat:23.9109540362,lon:108.0917367180},
+                {lat:23.6973610144,lon:108.1768877561},
+                {lat:23.4934742952,lon:108.3251893393},
+                {lat:23.3170518475,lon:108.4597921564},
+                {lat:23.1605608283,lon:108.3032130012},
+                {lat:22.7913683768,lon:108.3032065180},
+                {lat:22.6469803591,lon:108.4295720174},
+                {lat:22.3424628505,lon:108.3993498606},
+                {lat:22.0041934638,lon:108.4954946682},
+                {lat:21.6931717231,lon:108.3718878517}
+
+            ]
+        };
+        var liuZhouToGuiGangRoute = {
+            name:"柳州-贵港",
+            type:"cart",
+            start:liuZhouBase,
+            end:guiGangPort,
+            path:[
+                {lat:24.3234850050,lon:109.4140421916},
+                {lat:24.2043949042,lon:109.4403133546},
+                {lat:24.0138569506,lon:109.4073476546},
+                {lat:23.7652314646,lon:109.6462870551},
+                {lat:23.4808798692,lon:109.6462885318},
+                {lat:23.2514516499,lon:109.4320712388},
+                {lat:23.1226900139,lon:109.4320720543},
+
+            ]
+        };
+        var guiGangToFangChengRoute = {
+            name:"贵港-南宁-防城",
+            type:"cart",
+            start:guiGangPort,
+            end:fangChengPort,
+            path:[
+                {lat:23.1226900139,lon:109.4320720543},
+                {lat:23.1845500679,lon:109.2741236199},
+                {lat:23.1630897511,lon:109.0502836688},
+                {lat:23.1681430289,lon:108.7234418131},
+                {lat:22.9659812492,lon:108.6685078853},
+                {lat:22.7913683768,lon:108.3032065180},
+                {lat:22.6469803591,lon:108.4295720174},
+                {lat:22.3424628505,lon:108.3993498606},
+                {lat:22.0041934638,lon:108.4954946682},
+                {lat:21.6931717231,lon:108.3718878517}
+            ]
+        };
+
+        // 运输
+        var transfer1 = {
+            loader:"复兴号船",
+            ton:0.1,
+            startDay:60*2,
+            endDay:60*14,
+            route:riverRoute
+        };
+        var transfer2 = {
+            loader:"复兴号火车",
+            ton:1,
+            startDay:60*3,
+            endDay:60*6,
+            route:railRoute
+        };
+
+        var transfer3 = {
+            loader:"复兴号卡车",
+            ton:0.1,
+            startDay:60*2,
+            endDay:60*14,
+            route:liuZhouToGuiGangRoute
+        };
+
+        var transfer4 = {
+            loader:"复兴号卡车",
+            ton:0.1,
+            startDay:60*2,
+            endDay:60*14,
+            route:guiGangToFangChengRoute
+        };
+
+        var transfer5 = {
+            loader:"复兴号卡车",
+            ton:0.1,
+            startDay:60*2,
+            endDay:60*29,
+            route:duAnToFangChengRoute
+        };
+
+        var transfer6 = {
+            loader:"复兴号卡车",
+            ton:0.1,
+            startDay:60*12,
+            endDay:60*16,
+            route:duAnToFangChengRoute
+        };
+
+        var transfer = [transfer1, transfer2, transfer3, transfer4, transfer5, transfer6];
+
+        // 起始时间
+        var start = Cesium.JulianDate.fromDate(new Date(2018, 1, 1));
+        // 结束时间
+        var stop = Cesium.JulianDate.addSeconds(start, 60 *30, new Cesium.JulianDate());
+
+        // 设置始时钟始时间
+        viewer.clock.startTime = start.clone();
+        // 设置时钟当前时间
+        viewer.clock.currentTime = start.clone();
+        // 设置始终停止时间
+        viewer.clock.stopTime = stop.clone();
+        // 时间速率，数字越大时间过的越快
+        viewer.clock.multiplier = 45;
+        // 时间轴
+        viewer.timeline.zoomTo(start, stop);
+        // 循环执行
+        viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+
+
+
+        // 固定点
+        for (var j = 0; j < port.length; j++) {
+            var color;
+            if (port[j].type === "port"){
+                color = Cesium.Color.DEEPSKYBLUE
+            }else if (port[j].type === "base"){
+                color = Cesium.Color.PINK
+            }else{
+                color = Cesium.Color.GREY
+            }
+            viewer.entities.add({
+                name: port[j].name,
+                description: port[j].nowStock + port[j].day ,
+                position: Cesium.Cartesian3.fromDegrees(port[j].lon, port[j].lat),
+                point: {
+                    color: Cesium.Color.fromAlpha(color, 0.8),
+                    pixelSize: 10,
+                    outlineColor: Cesium.Color.fromAlpha(Cesium.Color.BISQUE, 0.8),
+                    outlineWidth: 2
+                }
+            });
+
+            // 贴图片
+            viewer.entities.add({
+                position : Cesium.Cartesian3.fromDegrees(port[j].lon , port[j].lat+ 0.01),
+                billboard :{
+                    image : '../images/Cesium_Logo_overlay.png'
+                }
+            });
+        }
+
+        // 准备data
+        var data = [];
+        for (var j = 0; j < transfer.length; j++) {
+            data[j] =[];
+            var startDay = transfer[j].startDay;
+            var stopDay = transfer[j].endDay;
+
+            for (var k =0; k < transfer[j].route.path.length; k++){
+
+                data[j][k] = {
+                    longitude: transfer[j].route.path[k].lon,
+                    dimension: transfer[j].route.path[k].lat,
+                    height: 0,
+                    time: (stopDay - startDay) * k / transfer[j].route.path.length + startDay
+                };
+            }
+
+
+        }
+
+
+
+        for (var j = 0; j < data.length; j++) {
+
+            var property = computeFlight(data[j]);
+
+            var color;
+            if (transfer[j].route.type === "rail"){
+                color = Cesium.Color.GOLD
+            }else if (transfer[j].route.type === "river"){
+                color = Cesium.Color.DEEPSKYBLUE
+            }else{
+                color = Cesium.Color.GREY
+            }
+            // 连线
+            viewer.entities.add({
+                position: property,
+                path: {
+                    show: true,
+                    leadTime: 60*60*24*30,
+                    trailTime: 60*60*24*30,
+                    width: 3,
+                    resolution: 1,
+                    material: new Cesium.PolylineOutlineMaterialProperty({
+                        color: Cesium.Color.fromAlpha(color, 0.5),
+                        outlineWidth: 1,
+                        outlineColor: Cesium.Color.red
+                    })
+                }
+            });
+            // 动态点
+            viewer.entities.add({
+                position: property,
+                name: "复兴号",
+                description: "运载量：100t",
+                path: {
+                    show: true,
+                    leadTime: 0,
+                    trailTime: 10,
+                    width: 5,
+                    resolution: 5,
+                    material: new Cesium.PolylineOutlineMaterialProperty({
+                        color: Cesium.Color.fromAlpha(Cesium.Color.RED, 1),
+                        outlineWidth: 1,
+                        outlineColor: Cesium.Color.red
+                    })
+                },
+                availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+                        start: Cesium.JulianDate.addSeconds(start, data[j][0].time, new Cesium.JulianDate),
+                        stop: Cesium.JulianDate.addSeconds(start, data[j][data[j].length - 1].time, new Cesium.JulianDate),
+                        isStartIncluded: true,
+                        isStopIncluded: false,
+                        data: Cesium.Cartesian3.fromDegrees(110, 39)
+                    })]
+                )
+            });
+
+        }
+
+        /**
+         * 计算 property
+         * @param source
+         * @returns {SampledPositionProperty|*}
+         */
+        function computeFlight(source) {
+            // 取样位置 相当于一个集合
+            var property = new Cesium.SampledPositionProperty();
+            property.setInterpolationOptions({
+                interpolationAlgorithm: Cesium.LagrangePolynomialApproximation,
+                interpolationDegree: 2
+            });
+            for (var i = 0; i < source.length; i++) {
+                var time = Cesium.JulianDate.addSeconds(start, source[i].time, new Cesium.JulianDate);
+                var position = Cesium.Cartesian3.fromDegrees(source[i].longitude, source[i].dimension, source[i].height);
+                // 添加位置，和时间对应
+                property.addSample(time, position);
+            }
+            return property;
+        }
+    }
+
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+
+
+</script>
+</body>
+</html>

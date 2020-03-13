@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="CZML Model">
+    <meta name="cesium-sandcastle-labels" content="CZML">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+
+<div id="toolbar"></div>
+
+<script id="cesium_sandcastle_script">
+
+    function startup(Cesium) {
+        'use strict';
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            imageryProvider: Cesium.createTileMapServiceImageryProvider({
+                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+
+            }),
+            baseLayerPicker: false
+        });
+        viewer._cesiumWidget._creditContainer.style.display = "none";
+
+
+        viewer.scene.globe.enableLighting = true;
+
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(70.100000, 39.375000, 13348000.0)
+        });
+
+        var data = [];
+        data[0] = [
+            {longitude: 30.405419, dimension: 39.918034, height: 1000, time: 0},
+            {longitude: 70.497402, dimension: 39.344641, height: 1000000, time: 150},
+            {longitude: 110.549265, dimension: 39.559967, height: 1000, time: 260}
+        ];
+        // 法国
+        data[1] = [
+            {longitude: 27.405419, dimension: 55.918034, height: 1000, time: 50},
+            {longitude: 70.497402, dimension: 45.344641, height: 1000000, time: 200},
+            {longitude: 113.549265, dimension: 38.559967, height: 1000, time: 360}
+        ];
+
+        //
+        data[2] = [
+            {longitude: 30.405419, dimension: 50.918034, height: 1000, time: 100},
+            {longitude: 70.497402, dimension: 45.344641, height: 1000000, time: 150},
+            {longitude: 112.549265, dimension: 37.559967, height: 1000, time: 200}
+        ];
+
+        data[3] = [
+            {longitude: 100.405419, dimension: 20.918034, height: 1000, time: 100},
+            {longitude: 105.497402, dimension: 30.344641, height: 500000, time: 150},
+            {longitude: 110.549265, dimension: 39.559967, height: 1000, time: 200}
+        ];
+
+        data[4] = [
+            {longitude: 90.405419, dimension: 20.918034, height: 1000, time: 50},
+            {longitude: 100.497402, dimension: 30.344641, height: 500000, time: 120},
+            {longitude: 110.549265, dimension: 39.559967, height: 1000, time: 200}
+        ];
+        data[4] = [
+            {longitude: 90.405419, dimension: 70.918034, height: 1000, time: 40},
+            {longitude: 100.497402, dimension: 60.344641, height: 500000, time: 170},
+            {longitude: 110.549265, dimension: 39.559967, height: 1000, time: 300}
+        ];
+
+        // 随机生成
+        for (var i = 0; i < 10; i++) {
+            var data_temp = [];
+
+            var lon0 = (Math.random() * 40 + 90);
+            var lat0 = (Math.random() * 40 + 39);
+            var lon1 = 110.549265 + Math.random() * 10;
+            var lat1 = 39.559967 + Math.random() * 10;
+            data_temp[0] = {longitude: lon0, dimension: lat0, height: 1000, time: Math.random() * 40};
+//            data_temp[1] = {longitude:(lon1+lon0)/2, dimension:(lat1+lat0)/2, height:5000, time:40};
+            data_temp[1] = {longitude: lon1, dimension: lat1, height: 1000, time: 300 + Math.random() * 40};
+            data[i + 5] = data_temp;
+        }
+        // 起始时间
+        var start = Cesium.JulianDate.fromDate(new Date(2017, 7, 11));
+        // 结束时间
+        var stop = Cesium.JulianDate.addSeconds(start, 360, new Cesium.JulianDate());
+
+        // 设置始时钟始时间
+        viewer.clock.startTime = start.clone();
+        // 设置时钟当前时间
+        viewer.clock.currentTime = start.clone();
+        // 设置始终停止时间
+        viewer.clock.stopTime = stop.clone();
+        // 时间速率，数字越大时间过的越快
+        viewer.clock.multiplier = 45;
+        // 时间轴
+        viewer.timeline.zoomTo(start, stop);
+        // 循环执行
+        viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+
+        for (var j = 0; j < data.length; j++) {
+            var property = computeFlight(data[j]);
+            // 添加模型
+
+
+            // 添加路径
+            var path = viewer.entities.add({
+                position: property,
+                name: "path",
+                path: {
+                    show: true,
+                    leadTime: 50,
+                    trailTime: 30,
+                    width: 3,
+                    resolution: 1,
+                    material: new Cesium.PolylineOutlineMaterialProperty({
+                        color: Cesium.Color.fromAlpha(Cesium.Color.LIGHTSKYBLUE, 0.5),
+                        outlineWidth: 1,
+                        outlineColor: Cesium.Color.red
+                    })
+                },
+                availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+                        start: Cesium.JulianDate.addSeconds(start, data[j][0].time, new Cesium.JulianDate),
+                        stop: Cesium.JulianDate.addSeconds(start, data[j][data[j].length - 1].time, new Cesium.JulianDate),
+                        isStartIncluded: true,
+                        isStopIncluded: false,
+                        data: Cesium.Cartesian3.fromDegrees(110, 39)
+                    })]
+                )
+            });
+
+
+            // 出发点
+            var count = Math.floor((data[j][data[j].length - 1].time - data[j][0].time) / 5);// 持续6秒
+            console.log(count);
+            for (var k = 0; k < 6; k++) {
+                // 出现的时间段
+                var IntervalCollection = new Cesium.TimeIntervalCollection([]);
+                for (var countI = 0; countI < count; countI++) {
+
+                    var availStartTime = Cesium.JulianDate.addSeconds(start, data[j][0].time + k + (countI * 6 + 5), new Cesium.JulianDate);
+                    var availStopTime = Cesium.JulianDate.addSeconds(start, data[j][0].time + k + 5 + (countI * 6 + 5), new Cesium.JulianDate);
+
+                    IntervalCollection.addInterval(
+                        new Cesium.TimeInterval({
+                            start: availStartTime,
+                            stop: availStopTime,
+                            isStartIncluded: true,
+                            isStopIncluded: false,
+                            data: Cesium.Cartesian3.fromDegrees(110, 39)
+                        })
+                    );
+                }
+
+                // 出发点
+                viewer.entities.add({
+                    position: Cesium.Cartesian3.fromDegrees(data[j][0].longitude, data[j][0].dimension),
+                    ellipse: {
+                        semiMinorAxis: 50000.0,
+                        semiMajorAxis: 50000.0,
+                        height: (1000 + 100000 * k),
+                        material: Cesium.Color.fromAlpha(Cesium.Color.CRIMSON, 0.8 - k * 0.1)
+                    },
+                    availability: IntervalCollection
+                });
+
+                // 结束点
+                viewer.entities.add({
+                    position: Cesium.Cartesian3.fromDegrees(data[j][data[j].length - 1].longitude, data[j][data[j].length - 1].dimension),
+                    ellipse: {
+                        semiMinorAxis: 30000.0,
+                        semiMajorAxis: 30000.0,
+                        height: (1000 + 100000 * k),
+                        material: Cesium.Color.fromAlpha(Cesium.Color.CHARTREUSE, 0.8 - k * 0.1)
+                    }
+                });
+            }
+
+        }
+
+        function computeFlight(source) {
+            // 取样位置 相当于一个集合
+            var property = new Cesium.SampledPositionProperty();
+            property.setInterpolationOptions({
+                interpolationAlgorithm: Cesium.LagrangePolynomialApproximation,
+                interpolationDegree: 2
+            });
+            for (var i = 0; i < source.length; i++) {
+                var time = Cesium.JulianDate.addSeconds(start, source[i].time, new Cesium.JulianDate);
+                var position = Cesium.Cartesian3.fromDegrees(source[i].longitude, source[i].dimension, source[i].height);
+                // 添加位置，和时间对应
+                property.addSample(time, position);
+            }
+            return property;
+        }
+    }
+
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+
+    /**
+     * 计算飞行
+     * @param source 数据坐标
+     * @returns {SampledPositionProperty|*}
+     */
+
+
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@ https://www.jianshu.com/p/c641d0e5b7a1
 
 
 
-esium为我们提供了scene.pick接口，如下代码实现坐标左键单击实现对象的拾取：
+Cesium为我们提供了scene.pick接口，如下代码实现坐标左键单击实现对象的拾取：
 
 
 
